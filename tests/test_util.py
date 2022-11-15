@@ -1,12 +1,7 @@
 import os
-from ..util import PATH, DATASETS_PATH
-from ..util import get_version
-from ..util import load_visual_graph_dataset
-
-
-def test_dataset_folder_exist():
-    rb_motifs_path = os.path.join(DATASETS_PATH, 'rb_dual_motifs')
-    assert os.path.exists(rb_motifs_path)
+from visual_graph_datasets.data import load_visual_graph_dataset
+from visual_graph_datasets.util import PATH, DATASETS_PATH
+from visual_graph_datasets.util import get_version
 
 
 def test_get_version():
