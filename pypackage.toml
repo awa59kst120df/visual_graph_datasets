@@ -1,0 +1,32 @@
+[build-system]
+requires = ["poetry>=1.2.0b2"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "visual_graph_datasets"
+version = "0.1.0"
+description = "Datasets for the training of graph neural networks (GNNs) and subsequent visualization of attributional explanations of XAI methods"
+licence = "MIT"
+authors = [""]
+maintainers = [""]
+readme = "README.rst"
+keywords = ["graph neural networks", "datasets", "explainable AI"]
+packages = [
+    {include = "visual_graph_dataset"}
+]
+include = []
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+poetry-bumpversion = "0.3.0"
+click = "7.1.2"
+jinja2 = "3.0.3"
+numpy = ">=1.23.2"
+matplotlib = ">=3.5.3"
+psutil = ">=5.7.2"
+pytest = "7.1.3"
+orjson = "3.8.1"
+
+[tool.poetry_bumpversion.file."visual_graph_datasets/VERSION"]
+search = "{current_version}"
+replace = "{new_version}"
