@@ -1,0 +1,18 @@
+{%- set header = "Visual Graph Datasets" %}
+    {{ header|bold }}
+    {{ ('═' * header|length)|bold }}
+{% for name, data in metadata["datasets"].items() %}
+    {%- set path = os.path.join(datasets_path, name) -%}
+    {% if os.path.exists(path) %}
+    {%- set status = '[✓]'|fg('green') -%}
+    {% else %}
+    {%- set status = '[ ]'|fg('gray') -%}
+    {% endif %}
+
+    {%- set title = name + ' ' + status %}
+    {{ title|bold }}
+    {{ ('—' * (name|length + 4))|bold }}
+    {% if os.path.exists(path) %}Location: {{ path }}{% endif %}
+    Total File Size: {{ '%0.2f' % (data["dataset_size"] / 1024**2) }} MB
+    Number of Elements: {{ data["num_elements"] }}
+{% endfor %}

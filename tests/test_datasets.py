@@ -14,3 +14,9 @@ def test_tadf_folder_exists():
     assert os.path.exists(dataset_path)
     assert len(os.listdir(dataset_path)) == 920396
 
+
+def test_movie_reviews_folder_exists():
+    dataset_path = os.path.join(DATASETS_PATH, 'movie_reviews')
+    assert os.path.exists(dataset_path)
+    assert len(os.listdir(dataset_path)) == 4000
+

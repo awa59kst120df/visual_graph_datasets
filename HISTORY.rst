@@ -2,14 +2,14 @@
 CHANGELOG
 =========
 
-0.1.0 - 14.10.2022
+0.1.0 - 14.11.2022
 ------------------
 
 * initial commit
 * added ``rb-dual-motifs`` dataset
 * added ``tadf`` dataset
 
-0.2.0 - 15.10.2022
+0.2.0 - 15.11.2022
 ------------------
 
 * Added module ``visual_graph_datasets.cli``
@@ -17,3 +17,28 @@ CHANGELOG
 * Added tests
 * Added function ``get_dataset_path`` which returns the full dataset path given the string name of a
   dataset.
+
+0.3.0 - 16.11.2022
+------------------
+
+* Added the dataset ``movie_reviews`` which is a natural language classification dataset which was
+  converted into a graph dataset.
+* Extended the function ``visual_graph_datasets.data.load_visual_graph_dataset`` to be able to load
+  natural language text based graph datasets as well.
+
+0.4.0 - 29.11.2022
+------------------
+
+Completely refactored the way in which datasets are managed.
+
+* by default the datasets are now stored within a folder called ``.visual_graph_datasets/datasets``
+  within the users home directory, but the datasets are no longer part of the repository itself.
+  Instead, the datasets have to be downloaded from a remote file share provider first.
+  CLI commands have been added to simplify this process. Assuming the remote provider is correctly
+  configured and accessible, datasets can simply downloaded by name using the ``download`` CLI command.
+* Added ``visual_graph_datasets.config`` which defines a config singleton class. By default this config
+  class only returns default values, but a config file can be created at
+  ``.visual_graph_datasets/config.yaml`` by using the ``config`` CLI command. Inside this config it is
+  possible to change the remote file share provider and the dataset path.
+* The CLI command ``list`` can be used to display all the available datasets in the remote file share.
+

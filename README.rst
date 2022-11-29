@@ -16,7 +16,8 @@
 Visual Graph Datasets
 =====================
 
-This package contains a collection of datasets primarily for the training of graph neural networks.
+This package provides the possibility to manage
+a collection of datasets primarily for the training of graph neural networks.
 Each dataset is represented by one *folder*. Inside these folders each element of the dataset is
 represented by *two* files: (1) A metadata JSON file which contains the full graph representation as
 well as additional metadata such as the canonical index, the target value to be predicted etc...
@@ -50,35 +51,62 @@ visualization step of generated explanations.
 
 Ultimately we decided to rather put the burden of downloading larger amounts of data on the user a
 single time in exchange of simplifying and reducing the burden of pre-processing and
-data visualization during each training process.
+data visualization for *each* training process.
+
+Additionally, by distributing both canonical indexing and canonical visualizations we aim to make
+explanation results more comparable in the future.
 
 Installation
 ============
 
-    **NOTE**: The size of this repository is approx. 30GB in total. Depending on your available bandwidth,
-    cloning this repository may take quite a while.
-
-    **NOTE**: We absolutely encourage to store these datasets on an SSD instead of an HDD. Due to the potentially
-    large amounts of files and overall data, reading speed is crucial to accelerate . As an example, we have
-    experienced that the large dataset of 500000 molecular graphs takes about 2 minutes to load from an SSD and
-    1.5 hours to load from an HDD.
-
-To get the datasets first clone this repository:
+First clone this repository:
 
 .. code-block:: console
 
     git clone https://github/username/visual_graph_datasets.git
 
-Then install the dependencies like this:
+Then install it like this:
 
 .. code-block:: console
 
     cd visual_graph_datasets
     pip3 install -e .
 
-    **NOTE** the package has to be installed in editable mode! This is because the actual dataset folders
-    are not part of the package and would not be copied to a different location during install.
 
+Download datasets
+-----------------
+
+    **NOTE**: We *strongly* encourage to store datasets on an SSD instead of an HDD, as this can make a
+    difference of multiple hours(!) when loading especially large datasets.
+
+Datasets can simply be downloaded by name by using the ``download`` command:
+
+.. code-block:: console
+
+    // Example for the dataset 'rb_dual_motifs'
+    python3 -m visual_graph_datasets.cli download "rb_dual_motifs"
+
+By default this dataset will be downloaded into the folder ``$HOME/.visual_graph_datasets/datasets``
+where HOME is the current users home directory.
+
+The dataset download destination can be changed in a config file by using the ``config`` command:
+
+.. code-block:: console
+
+    python3 -m visual_graph_datasets.cli config
+
+This command will open the config file at ``$HOME/.visual_graph_datasets/config.yaml`` using the systems
+default text editor.
+
+List available datasets
+-----------------------
+
+You can display a list of all the currently available datasets of the current remote file share provider
+and some metadata information about them by using the command ``list``:
+
+.. code-block:: console
+
+    python3 -m visual_graph_datasets.cli list
 
 Running the unittests
 ---------------------
@@ -99,7 +127,7 @@ some basic utilities to load and explore the datasets themselves within python p
 
 .. code-block:: python
 
-    from visual_graph_datasets.util import DATASETS_FOLDER
+    from visual_graph_datasets.config import Config
     from visual_graph_datasets.data import load_visual_graph_dataset
 
     # The function only needs the absolute path to the dataset folder and will load all the entire datasets
@@ -108,7 +136,7 @@ some basic utilities to load and explore the datasets themselves within python p
     # dictionaries and the second dict maps the integer indices of the elements to the very same content
     # dictionaries. Two separate dictionaries are returned to provide different ways of accessing the data
     # of the elements which are needed in different situations.
-    dataset_path = os.path.join(DATASETS_PATH, 'rb_dual_motifs')
+    dataset_path = os.path.join(Config().get_datasets_path(), 'rb_dual_motifs')
     data_name_map, data_index_map = load_visual_graph_dataset(dataset_path)
 
 One such content dictionary which are the values of the two dicts returned by the function have the
@@ -142,50 +170,10 @@ With the following variable definitions:
 Datasets
 ========
 
-1. RbMotifs
------------
+Here is a list of the datasets currently included.
 
-A syntethic dataset consisting of 5000 randomly generated colored graphs of medium size. Edges are
-unweighted and undirected. Nodes have 3 feature values, representing RGB color values. Additionally some
-graphs were seeded simultaneously with 0, 1 or 2 special sub-graph motifs out of a pool of 4 possible
-distinct motifs. Two of these motifs are mainly based on red nodes and two are based on blue nodes, hence
-the name "red and blue dual motifs".
+For more information about the individual datasets use the ``list`` command in the CLI (see above).
 
-For the regression target value, each graph is assigned with a single real value [-3, +3]. The presence of
-blue motifs contributes negatively for a graph's overall values and the presence of red motifs contributes
-positively. Additionally a small random uniform value is added.
-
-The visualization for each graph simply shows each node colored with the color defined by it's corresponding
-feature vector.
-
-Since this is a synthetic dataset, ground truth explanations are available and the ground truth importance
-annotations are added to the metadata of each element. ``node_importances`` and ``edge_importances`` contain
-the single-channel ground truth explanations where all motifs are highlighted. The fields
-``multi_node_importances`` and ``multi_edge_importances`` contain the dual-channel explanations where the
-first channel contains all the negative evidence (blue motifs) and the second channel the positive evidence
-(red motifs)
-
-2. TADF - singlet triplet energy gaps
--------------------------------------
-
-A real-world dataset consisting of 500000 molecular graphs. The regression target value is the singlet
-triplet energy gap for the corresponding molecule.
-This value is one of two important values to determine the TADF (thermally activated delayed flourescence)
-behavior of molecules, which in turn is an important characteristic for potential applications
-of a compound in OLED technology.
-
-The dataset is originally from the work of `Gomez-Bombarelli et al.`_ who used a high-throughput virtual
-screening approach to search for promising OLED materials. During this process, the target values of this
-dataset were created by DFT simulations of the compounds.
-
-The original dataset of SMILES was converted into a graph dataset using RDKit_. The nodes were annotated
-with a one-hot encoding of atom types along with various other properties. The edges were annotated with
-a one-hot encoding of bond types along with other properties.
-
-The graph visualizations show the molecular graphs for each molecule, as they were created by RDKit_.
-
-Since this is a real-world dataset, no explanation ground truth is available.
-
-.. _RDKit: https://www.rdkit.org/
-.. _Gomez-Bombarelli et al.: https://www.nature.com/articles/nmat4717
+* rb_dual_motifs
+* tadf
 
