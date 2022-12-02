@@ -6,7 +6,6 @@ import pytest
 import jinja2 as j2
 
 from visual_graph_datasets.data import load_visual_graph_dataset
-from visual_graph_datasets.util import PATH, DATASETS_PATH
 from visual_graph_datasets.util import TEMPLATE_ENV
 from visual_graph_datasets.util import get_version
 from visual_graph_datasets.util import get_dataset_path

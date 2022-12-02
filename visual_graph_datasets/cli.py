@@ -49,6 +49,7 @@ def cli(ctx, no_config: bool, version: bool):
         click.secho(version_string, bold=True)
         return
 
+
 @click.command('bundle', short_help='bundle all datasets in a folder to make them ready for upload')
 @click.argument('path', type=click.Path(dir_okay=True, exists=True))
 @click.option('-f', '--force', is_flag=True,
@@ -176,6 +177,7 @@ cli.add_command(edit_config)
 cli.add_command(download_dataset)
 cli.add_command(bundle)
 cli.add_command(list_datasets)
+
 
 if __name__ == '__main__':
     cli()

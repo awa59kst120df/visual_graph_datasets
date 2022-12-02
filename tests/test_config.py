@@ -10,7 +10,7 @@ from visual_graph_datasets.util import TEMPLATE_ENV
 
 
 def test_load_config_works_when_no_file_exists():
-    config_dict = load_config()
+    config_dict = load_config('')
     assert isinstance(config_dict, dict)
     assert len(config_dict) == 0
 

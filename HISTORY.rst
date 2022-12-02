@@ -42,3 +42,22 @@ Completely refactored the way in which datasets are managed.
   possible to change the remote file share provider and the dataset path.
 * The CLI command ``list`` can be used to display all the available datasets in the remote file share.
 
+0.5.0 - 02.11.2022
+------------------
+
+* Somewhat extended the ``AbstractFileShare`` interface to also include a method ``check_dataset`` which
+  retrieves the files shares metadata and then checks if the provided dataset name is available from
+  that file share location.
+* Added the sub package ``visual_graph_datasets.generation`` which will contain all the functionality
+  related to the generation of datasets.
+* Added the module ``visual_graph_datasets.generation.graph`` and the class ``GraphGenerator`` which
+  presents a generic solution for graph generation purposes.
+* Added the sub package ``visual_graph_datasets.visualization`` which will contain all the functionality
+  related to the visualization of various different kinds of graphs
+* Added the module ``visual_graph_datasets.visualization.base``
+* Added the module ``visual_graph_datasets.visualization.colors`` and functionality to visualize
+  grayscale graphs which contain a single attribute that represents the grayscale value
+* Added a ``experiments`` folder which will contain ``pyxomex`` experiments
+* Added an experiment ``generate_mock.py`` which generates a simple mock dataset which will subsequently
+  be used for testing purposes.
+* Extended the dependencies

@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import logging
 import typing as t
 
@@ -9,6 +10,17 @@ import numpy as np
 import visual_graph_datasets.typing as tc
 from visual_graph_datasets.util import NULL_LOGGER
 from visual_graph_datasets.util import merge_optional_lists
+
+
+class NumericJsonEncoder(json.JSONEncoder):
+
+    def default(self, o: t.Any) -> t.Any:
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        elif isinstance(o, np.generic):
+            return o.item()
+        else:
+            return super(NumericJsonEncoder, self).default(o)
 
 
 def load_visual_graph_dataset(path: str,
