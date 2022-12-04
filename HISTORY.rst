@@ -69,3 +69,8 @@ Completely refactored the way in which datasets are managed.
   importances on top of graph visualizations.
 * Other small fixes, including a problem with the generation of the mock dataset
 * Added ``imageio`` to dependencies
+
+0.6.1 - 04.12.2022
+------------------
+
+* Default config now has the public nextcloud provider url
