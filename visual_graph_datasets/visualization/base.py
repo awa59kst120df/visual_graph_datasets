@@ -30,13 +30,15 @@ def create_frameless_figure(width: int = 100,
         size of the image.
     :return:
     """
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width / (77 * ratio), height / (77 * ratio)))
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width / (100 * ratio), height / (100 * ratio)))
+    fig.set_dpi(100 * ratio)
 
     # https://stackoverflow.com/questions/14908576
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
+    ax.axis('off')
 
     # Selecting the axis-X making the bottom and top axes False.
     plt.tick_params(axis='x', which='both', bottom=False,
@@ -55,7 +57,7 @@ def create_frameless_figure(width: int = 100,
     # method of the figure object. Since the saving process will come later we make sure that the correct
     # parameters are used by overriding the default parameters for the savefig method here
     def savefig(*args, **kwargs):
-        fig._savefig(*args, **kwargs, bbox_inches='tight', pad_inches=0, dpi=100 * ratio)
+        fig._savefig(*args, **kwargs, dpi=100 * ratio)
 
     setattr(fig, '_savefig', fig.savefig)
     setattr(fig, 'savefig', savefig)

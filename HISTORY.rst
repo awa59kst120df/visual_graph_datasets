@@ -61,3 +61,11 @@ Completely refactored the way in which datasets are managed.
 * Added an experiment ``generate_mock.py`` which generates a simple mock dataset which will subsequently
   be used for testing purposes.
 * Extended the dependencies
+
+0.6.0 - 04.12.2022
+------------------
+
+* Added module ``visual_graph_datasets.visualization.importances`` which implements the visualization of
+  importances on top of graph visualizations.
+* Other small fixes, including a problem with the generation of the mock dataset
+* Added ``imageio`` to dependencies

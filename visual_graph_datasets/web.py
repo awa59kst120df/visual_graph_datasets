@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import zipfile
 import tempfile
 import logging
@@ -72,7 +73,12 @@ class NextcloudFileShare(AbstractFileShare):
         super(NextcloudFileShare, self).__init__(config, **kwargs)
         self.url: str = self.config.get_nextcloud_url().strip('/')
 
-    def download_file(self, file_name: str, folder_path: str) -> str:
+    def download_file(self,
+                      file_name: str,
+                      folder_path: str,
+                      chunk_size: int = 8192,
+                      log_step: int = 1 * 1024**2  # Log after every 10MB
+                      ) -> str:
         url = '/'.join([self.url, 'download'])
         params = {
             'path': '/',
@@ -81,9 +87,27 @@ class NextcloudFileShare(AbstractFileShare):
 
         file_path = os.path.join(folder_path, file_name)
         with requests.get(url, params=params, stream=True) as r:
+            if 'Content-Length' in r.headers:
+                total_bytes = int(r.headers['Content-Length'])
+
+            fetched_bytes = 0
+            logged_bytes = 0
+            start_time = time.time()
             with open(file_path, mode='wb') as file:
-                for chunk in r.iter_content(chunk_size=8192):
+                for chunk in r.iter_content(chunk_size=chunk_size):
                     file.write(chunk)
+                    fetched_bytes += chunk_size
+
+                    if 'Content-Length' in r.headers and fetched_bytes > logged_bytes + log_step:
+                        elapsed_time = time.time() - start_time
+                        bytes_per_second = fetched_bytes / elapsed_time
+                        remaining_time = (total_bytes - fetched_bytes) / bytes_per_second
+                        self.logger.info(f'{fetched_bytes / 1024**2:.1f} / '
+                                         f'{total_bytes / 1024**2:.1f} MB'
+                                         f' - elapsed time: {elapsed_time/3600:.2f} hrs'
+                                         f' - avg. speed: {bytes_per_second/1024**2:.1f} MB/s'
+                                         f' - remaining time: {remaining_time/3600:.2f} hrs')
+                        logged_bytes = fetched_bytes
 
         return file_path
 

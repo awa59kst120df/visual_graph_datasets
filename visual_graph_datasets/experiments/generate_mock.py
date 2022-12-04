@@ -104,13 +104,13 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
             [0 for _ in g['node_indices']],
             generator.get_seed_graph_node_indication(0)
         ])
-        g['node_importances_2'] = np.array(node_importances)
+        g['node_importances_2'] = np.array(node_importances).T
 
         edge_importances = np.array([
             [0 for _ in g['edge_indices']],
             generator.get_seed_graph_edge_indication(0)
         ])
-        g['edge_importances_2'] = np.array(edge_importances)
+        g['edge_importances_2'] = np.array(edge_importances).T
 
         dataset.append(g)
 
@@ -143,8 +143,14 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
         # Now we can save this figure as an image
         image_path = os.path.join(dataset_folder_path, f'{index}.png')
         fig.savefig(image_path)
-        plt.close(fig)
 
+        # Now we also need to figure out the coordinates of nodes as pixel values inside the coordinate
+        # system of the created image representation of the figure.
+        image_node_positions = [[int(v) for v in ax.transData.transform((x, y))]
+                                for x, y in node_positions]
+        g['image_node_positions'] = image_node_positions
+
+        plt.close(fig)
         if index % LOG_STEP_EVAL == 0:
             e.info(f'({index}/{NUM_ELEMENTS}) done')
 
@@ -156,8 +162,13 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
     e.info('generating metadata...')
     for index, g in enumerate(dataset):
 
+        train_split = [1] if index in train_indices else []
+        test_split = [1] if index not in train_indices else []
+
         metadata = {
             'split': 'train' if index in train_indices else 'test',
+            'train_split': train_split,
+            'test_split': test_split,
             'index': index,
             'target': g['graph_labels'],
             'graph': g,
