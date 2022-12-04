@@ -74,3 +74,8 @@ Completely refactored the way in which datasets are managed.
 ------------------
 
 * Default config now has the public nextcloud provider url
+
+0.6.2 - 04.12.2022
+------------------
+
+* Fixed a bug with the ``list`` command which crashed due to non-existing terminal color specification

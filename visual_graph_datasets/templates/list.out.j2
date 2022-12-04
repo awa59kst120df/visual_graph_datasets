@@ -6,7 +6,7 @@
     {% if os.path.exists(path) %}
     {%- set status = '[✓]'|fg('green') -%}
     {% else %}
-    {%- set status = '[ ]'|fg('gray') -%}
+    {%- set status = '[ ]'|fg('yellow') -%}
     {% endif %}
 
     {%- set title = name + ' ' + status %}
