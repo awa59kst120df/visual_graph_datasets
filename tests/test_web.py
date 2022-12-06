@@ -13,3 +13,7 @@ def test_download_mock_dataset_works():
         config.load()
         file_share = NextcloudFileShare(config, logger=LOG)
         file_share.download_dataset('mock', path)
+
+        dataset_path = os.path.join(path, 'mock')
+        assert os.path.exists(dataset_path)
+        assert os.path.isdir(dataset_path)

@@ -1,8 +1,8 @@
 import shutil
-
 import click
 import os
 import json
+import typing as t
 
 from visual_graph_datasets.config import CONFIG_PATH
 from visual_graph_datasets.config import Config
@@ -58,18 +58,54 @@ def cli(ctx, no_config: bool, version: bool):
               help='Skips the compression of the dataset folders itself and only does metadata')
 @click.pass_context
 def bundle(ctx, path: str, force: bool, no_compress: bool):
+    """
+    Will interpret all the folders within the given directory PATH as visual graph datasets. These datasets
+    will be processed such that they can be uploaded to the remote file share location. This mainly includes
+    two steps:
+
+    (1) a new metadata.json file for the remote file share location is created from all the datasets.
+
+    (2) all the dataset folders are compressed into ZIP archives.
+
+    By default, operations will be skipped when the corresponding files already exist. Use the --force flag
+    to force a replacement
+    """
     config = ctx.obj
 
-    if not no_compress:
-        pass
-
+    # ~ creating the metadata file for all the datasets in that path
     echo_info('creating metadata for all datasets')
     metadata = create_datasets_metadata(path)
     metadata_path = os.path.join(path, 'metadata.json')
-    with open(metadata_path, mode='w') as file:
-        json.dump(metadata, file, indent=4)
+    if os.path.exists(metadata_path) and not force:
+        echo_info('metadata already exists, skipping ...')
+    else:
+        with open(metadata_path, mode='w') as file:
+            json.dump(metadata, file, indent=4)
 
-    echo_success(f'created metadata.json @ {metadata_path}')
+        echo_success(f'created metadata.json @ {metadata_path}')
+
+    # ~ compressing all the datasets into ZIP which can then be directly uploaded to the remote fileshare
+    if no_compress:
+        echo_info('skipping zip archiving...')
+    else:
+        echo_info('packing datasets into ZIP archives')
+        members: t.List[str] = os.listdir(path)  # list of file and folder names in the given folder path
+        for member in members:
+            member_path = os.path.join(path, member)
+            # We will assume every folder within the given folder to represent one dataset
+            if os.path.isdir(member_path):
+                zip_path = os.path.join(path, f'{member}.zip')
+                if os.path.exists(zip_path) and not force:
+                    echo_info(f'zip "{member}" already exists, skipping...')
+                else:
+                    echo_info(f'zipping {member}...')
+                    shutil.make_archive(
+                        base_name=member_path,
+                        format='zip',
+                        root_dir=member_path,
+                        base_dir=member_path
+                    )
+                    echo_success(f'created "{member}" archive @ {zip_path}')
 
 
 @click.command('config', short_help='open the config file in editor')
@@ -77,6 +113,9 @@ def bundle(ctx, path: str, force: bool, no_compress: bool):
               help='replaces the config file if one already exists')
 @click.pass_context
 def edit_config(ctx, force: bool):
+    """
+    Opens the config file in the systems default text editor
+    """
     config = ctx.obj
 
     # As the first thing we need to check if a config file even already exists, if that is not the case
@@ -110,6 +149,13 @@ def edit_config(ctx, force: bool):
 @click.option('-v', '--verbose', is_flag=True)
 @click.pass_context
 def list_datasets(ctx, verbose: bool):
+    """
+    Lists the titles and additional metadata information about all the datasets available at the currently
+    configured remote file share provider by downloading and parsing the "metadata.json" file available
+    at the file share.
+
+    Also displays which of these datasets are currently already available on the current system.
+    """
     config = ctx.obj
     datasets_path = config.get_datasets_path()
 
@@ -135,6 +181,10 @@ def list_datasets(ctx, verbose: bool):
 @click.option('-f', '--force', is_flag=True, help='deletes the dataset first if it exists')
 @click.pass_context
 def download_dataset(ctx, dataset_name: str, force: bool):
+    """
+    Downloads the dataset with the given DATASET_NAME from the remote file share provider into the
+    configured local permanent dataset folder.
+    """
     config = ctx.obj
     datasets_path = config.get_datasets_path()
     # This function creates the datasets folder if it does not exist already

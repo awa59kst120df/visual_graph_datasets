@@ -79,3 +79,11 @@ Completely refactored the way in which datasets are managed.
 ------------------
 
 * Fixed a bug with the ``list`` command which crashed due to non-existing terminal color specification
+
+0.6.3 - 06.12.2022
+------------------
+
+* Finally finished the implementation of the ``bundle`` command.
+* updated the rb_motifs dataset for the new structure and also recreated all the visualizations with a
+  transparent background.
+* Implemented the visualization of colored graphs
