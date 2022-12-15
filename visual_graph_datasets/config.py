@@ -33,10 +33,12 @@ def load_config(path: str = CONFIG_PATH) -> dict:
 
 class Singleton(type):
     """
-    This is metaclass definition, which implements the singleton pattern. The objective is that whatever class uses
-    this as a metaclass does not work like a traditional class anymore, where upon calling the constructor a NEW
-    instance is returned. This class overwrites the constructor behavior to return the same instance upon calling the
-    the constructor. This makes sure that always just a single instance exists in the runtime!
+    This is metaclass definition, which implements the singleton pattern. The objective is that whatever
+    class uses this as a metaclass does not work like a traditional class anymore, where upon calling the
+    constructor a NEW instance is returned. This class overwrites the constructor behavior to return the
+    same instance upon calling the constructor. This makes sure that always just a single instance
+    exists in the runtime!
+
     **USAGE**
     To implement a class as a singleton it simply has to use this class as the metaclass.
     .. code-block:: python
@@ -60,12 +62,34 @@ class Singleton(type):
 
 
 class Config(metaclass=Singleton):
+    """
+    This is the main config singleton for the program. It can be used to load the ``config.yaml`` file and
+    provides methods that act as a facade to retrieve the config values.
 
+    This class being a singleton means that invocations of the constructor will not create separate object
+    instances, but instead return the same instance every time:
+
+    .. code-block:: python
+
+        from visual_graph_datasets.config import Config
+
+        config1 = Config()
+        config2 = Config()
+        print(config1 == config2)  # True
+
+    The data from the config file is not loaded by default, only after invoking ``load`` method. Each
+    call to that method will freshly load the data from the file.
+    """
     def __init__(self):
         self.data = {}
+        self.path: t.Optional[str] = None
 
     def load(self, path: str = CONFIG_PATH):
+        self.path = path
         self.data = load_config(path=path)
+
+    def get_folder_path(self) -> t.Optional[str]:
+        return os.path.dirname(self.path)
 
     def get_platform(self) -> str:
         """
@@ -86,6 +110,9 @@ class Config(metaclass=Singleton):
     def get_provider(self, default='nextcloud') -> str:
         return self.retrieve_nested_with_default('base/provider', default)
 
+    def get_providers_map(self, default={}) -> t.Dict[str, dict]:
+        return self.retrieve_nested_with_default('providers', default)
+
     def get_nextcloud_url(self, default='') -> str:
         return self.retrieve_nested_with_default('nextcloud/url', default)
 
@@ -101,3 +128,7 @@ class Config(metaclass=Singleton):
             return current_value
         except (KeyError, TypeError):
             return default
+
+    def __str__(self):
+        return (f'Config(path="{self.path}")')
+

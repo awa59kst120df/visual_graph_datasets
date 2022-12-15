@@ -87,3 +87,19 @@ Completely refactored the way in which datasets are managed.
 * updated the rb_motifs dataset for the new structure and also recreated all the visualizations with a
   transparent background.
 * Implemented the visualization of colored graphs
+
+0.7.0 - 15.12.2022
+------------------
+
+* Changed the config file a bit: It is now possible to define as many custom file share providers as
+  possible under the ``providers`` section. Each new provider however needs to have a unique name, which
+  is then required to be supplied for the ``get_file_share`` function to actually construct the
+  corresponding file share provider object instance.
+* Added the package ``visual_graph_datasets.processing`` which contains functionality to process source
+  datasets into visual graph datasets.
+* Added experiment ``generate_molecule_dataset_from_csv`` which can be used to download the source CSV
+  file for a molecule (SMILES based) dataset from the file share and then generate a visual graph dataset
+  based on that.
+* Added the experiment ``generate_benzene_solubility_dataset_from_csv`` which creates the benzene
+  solubility visual graph dataset.
+* Added the ``benzene_solubility`` dataset to the remote repository.

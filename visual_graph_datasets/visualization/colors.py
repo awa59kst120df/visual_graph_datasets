@@ -69,15 +69,23 @@ def visualize_color_graph(ax: plt.Axes,
                           alpha: float = 1.0,
                           node_size: float = 100.0) -> None:
     """
+    Creates a colored graph visualization for the given graph ``g`` drawn on the canvas of ``ax``
+    using the node positions ``node_positions``. The node positions have to be in the figure coordinate
+    system!
 
-    :param ax:
-    :param g:
-    :param node_positions:
-    :param color_map:
-    :param node_border_width:
-    :param edge_width:
-    :param alpha:
-    :param node_size:
+    For a "color" graph it is assumed that the first 3 node attributes of every node are values between
+    0 and 1 which respectively define the red, green and blue (RGB) color value associated with that node.
+    This color value is then used to visualize the graph.
+
+    :param ax: The Axes onto which the visualization is drawn
+    :param g: The graph to be drawn
+    :param node_positions: An array with the shape (V, 2) where V is the number of nodes in the given graph.
+        This array is supposed to contain the 2D coordinates for every node, defining where that node
+        is to be drawn to the canvas.
+    :param node_border_width: The line width of the black border around the circular node visualizations
+    :param edge_width: The line width of the black edges between the nodes
+    :param alpha: The alpha value for all the visualization elements
+    :param node_size: The size of the node visualizations.
 
     :return: None
     """

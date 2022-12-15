@@ -11,7 +11,7 @@ from visual_graph_datasets.util import get_version
 from visual_graph_datasets.util import sanitize_input
 from visual_graph_datasets.util import ensure_folder, open_editor
 from visual_graph_datasets.data import create_datasets_metadata
-from visual_graph_datasets.web import AbstractFileShare, PROVIDER_CLASS_MAP
+from visual_graph_datasets.web import AbstractFileShare, PROVIDER_CLASS_MAP, get_file_share
 
 # == CLI UTILS ==
 
@@ -147,8 +147,11 @@ def edit_config(ctx, force: bool):
 
 @click.command('list', short_help='lists all the datasets available on the file share')
 @click.option('-v', '--verbose', is_flag=True)
+@click.option('-p', '--provider', type=click.STRING, default='main')
 @click.pass_context
-def list_datasets(ctx, verbose: bool):
+def list_datasets(ctx,
+                  verbose: bool,
+                  provider: str):
     """
     Lists the titles and additional metadata information about all the datasets available at the currently
     configured remote file share provider by downloading and parsing the "metadata.json" file available
@@ -159,10 +162,8 @@ def list_datasets(ctx, verbose: bool):
     config = ctx.obj
     datasets_path = config.get_datasets_path()
 
-    file_share_provider = config.get_provider()
-    echo_info(f'using file share provider: {file_share_provider}', verbose)
-    file_share_class = PROVIDER_CLASS_MAP[file_share_provider]
-    file_share: AbstractFileShare = file_share_class(config)
+    echo_info(f'using file share provider: {provider}', verbose)
+    file_share: AbstractFileShare = get_file_share(config, provider)
     echo_info(f'downloading dataset metadata from file share', verbose)
     metadata = file_share.download_metadata()
     echo_success(f'downloaded metadata:', verbose)
@@ -179,8 +180,12 @@ def list_datasets(ctx, verbose: bool):
 @click.command('download', short_help='download a dataset by name')
 @click.argument('dataset_name')
 @click.option('-f', '--force', is_flag=True, help='deletes the dataset first if it exists')
+@click.option('-p', '--provider', type=click.STRING, default='main')
 @click.pass_context
-def download_dataset(ctx, dataset_name: str, force: bool):
+def download_dataset(ctx,
+                     dataset_name: str,
+                     force: bool,
+                     provider: str):
     """
     Downloads the dataset with the given DATASET_NAME from the remote file share provider into the
     configured local permanent dataset folder.
@@ -214,10 +219,8 @@ def download_dataset(ctx, dataset_name: str, force: bool):
             echo_info('stopping download, because dataset already exists')
             return
 
-    file_share_provider = config.get_provider()
-    echo_info(f'using file share provider: {file_share_provider}')
-    file_share_class = PROVIDER_CLASS_MAP[file_share_provider]
-    file_share: AbstractFileShare = file_share_class(config)
+    echo_info(f'using file share provider: {provider}')
+    file_share: AbstractFileShare = get_file_share(config, provider)
     file_share.download_dataset(dataset_name, datasets_path)
 
     echo_success(f'downloaded dataset "{dataset_name}" @ {dataset_path}')

@@ -25,9 +25,13 @@ class AbstractFileShare:
     the data in a generalized way. Different subclasses will have to implement the specific interactions
     with the different providers to implement this expected behavior.
     """
-    def __init__(self, config: Config, logger: logging.Logger = NULL_LOGGER):
-        self.config = config
+    def __init__(self, logger: logging.Logger = NULL_LOGGER, **kwargs):
         self.logger = logger
+
+    def download_file(self,
+                      file_name: str,
+                      folder_path: str) -> str:
+        raise NotImplementedError()
 
     def download_metadata(self) -> dict:
         raise NotImplementedError()
@@ -69,9 +73,9 @@ class NextcloudFileShare(AbstractFileShare):
     *folder* which contains all the dataset ZIP files as well as the metadata JSON file.
     """
 
-    def __init__(self, config, **kwargs):
-        super(NextcloudFileShare, self).__init__(config, **kwargs)
-        self.url: str = self.config.get_nextcloud_url().strip('/')
+    def __init__(self, url, **kwargs):
+        super(NextcloudFileShare, self).__init__(**kwargs)
+        self.url: str = url.strip('/')
 
     def download_file(self,
                       file_name: str,
@@ -85,7 +89,9 @@ class NextcloudFileShare(AbstractFileShare):
             'files': file_name
         }
 
-        file_path = os.path.join(folder_path, file_name)
+        # 15.12.22 - Introduced additional os.path.basename to fix a bug where the file_path would be
+        # wrong when downloading nested files.
+        file_path = os.path.join(folder_path, os.path.basename(file_name))
         with requests.get(url, params=params, stream=True) as r:
             if 'Content-Length' in r.headers:
                 total_bytes = int(r.headers['Content-Length'])
@@ -143,8 +149,29 @@ PROVIDER_CLASS_MAP = {
 }
 
 
-def get_file_share(config: Config()) -> AbstractFileShare:
-    provider = config.get_provider()
-    file_share_class = PROVIDER_CLASS_MAP[provider]
-    file_share = file_share_class()
+def get_file_share(config: Config = Config(),
+                   provider_id: str = 'main') -> AbstractFileShare:
+    """
+    Given the ``config`` singleton and the unique string ``provider_id`` of the provider to be used, this
+    function will create a corresponding FileShare instance and return it.
+
+    :param config:
+    :param provider_id: The unique string id which identifies the provider in the config file.
+
+    :return: The constructed object instance of the appropriate AbstractFileShare subclass.
+    """
+    provider_map: dict = config.get_providers_map()
+    # This might be a mistake which will happen quite often, that a provider id is used which is not
+    # present in the config. In this case we should give a good error message.
+    if provider_id not in provider_map:
+        raise KeyError(f'The given provider_id "{provider_id}" is not specified within the currently '
+                       f'loaded config file {str(config)}. The only valid options are: '
+                       f'{", ".join(provider_map.keys())}. Please choose another provider or add one to '
+                       f'the config by using the "config" command.')
+
+    provider_kwargs = provider_map[provider_id]
+
+    file_share_class = PROVIDER_CLASS_MAP[provider_kwargs['type']]
+    file_share = file_share_class(**provider_kwargs)
+
     return file_share
