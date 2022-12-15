@@ -102,8 +102,8 @@ def bundle(ctx, path: str, force: bool, no_compress: bool):
                     shutil.make_archive(
                         base_name=member_path,
                         format='zip',
-                        root_dir=member_path,
-                        base_dir=member_path
+                        root_dir=path,
+                        base_dir=member
                     )
                     echo_success(f'created "{member}" archive @ {zip_path}')
 

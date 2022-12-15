@@ -103,3 +103,8 @@ Completely refactored the way in which datasets are managed.
 * Added the experiment ``generate_benzene_solubility_dataset_from_csv`` which creates the benzene
   solubility visual graph dataset.
 * Added the ``benzene_solubility`` dataset to the remote repository.
+
+0.7.1 - 15.12.2022
+------------------
+
+* Fixed a bug in the ``bundle`` command
