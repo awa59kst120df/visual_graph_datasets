@@ -104,7 +104,7 @@ PLOT_COLOR = 'gray'
 # == EXPERIMENT PARAMETERS ==
 DEBUG = True
 BASE_PATH = os.getcwd()
-NAMESPACE = 'generate_molecule_dataset_from_csv/base'
+NAMESPACE = 'results/generate_molecule_dataset_from_csv/base'
 with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glob=globals())):
     e.info('generating a molecule visual graph dataset from CSV source file...')
     config = Config()
@@ -190,9 +190,9 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
                 value = callback(bond, data)
                 attributes += value
 
+            edge_attributes.append(attributes)
+            if UNDIRECTED_EDGES_AS_TWO:
                 edge_attributes.append(attributes)
-                if UNDIRECTED_EDGES_AS_TWO:
-                    edge_attributes.append(attributes)
 
         g['edge_indices'] = np.array(edge_indices)
         g['edge_attributes'] = np.array(edge_attributes)
@@ -208,7 +208,7 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
         # We need to do this *before* the metadata because one side result of the visualization process is
         # the node positions within that image, which have to be added as graph properties as well.
         fig, ax = create_frameless_figure(width=IMAGE_WIDTH, height=IMAGE_HEIGHT)
-        node_positions = visualize_molecular_graph_from_mol(
+        node_positions, _ = visualize_molecular_graph_from_mol(
             ax=ax,
             mol=mol,
             image_width=IMAGE_WIDTH,

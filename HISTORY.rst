@@ -108,3 +108,9 @@ Completely refactored the way in which datasets are managed.
 ------------------
 
 * Fixed a bug in the ``bundle`` command
+* Added a module ``visual_graph_datasets.testing`` with testing utils.
+
+0.7.2 - 16.12.2022
+------------------
+
+* Renamed ``TestingConfig`` to ``IsolatedConfig`` due to a warning in pytest test collection

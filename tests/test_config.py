@@ -7,8 +7,7 @@ import jinja2 as j2
 from visual_graph_datasets.config import load_config
 from visual_graph_datasets.config import Config
 from visual_graph_datasets.util import TEMPLATE_ENV
-
-from .util import TestingConfig
+from visual_graph_datasets.testing import IsolatedConfig
 
 
 def test_testing_config():
@@ -16,7 +15,7 @@ def test_testing_config():
     TestingConfig is a utility context manager which can be used to create isolated environments for the
     testing purposes.
     """
-    with TestingConfig() as config:
+    with IsolatedConfig() as config:
         assert isinstance(config, Config)
         assert isinstance(config.get_datasets_path(), str)
         assert os.path.exists(config.get_datasets_path())

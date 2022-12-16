@@ -57,7 +57,7 @@ LOG_STEP_EVAL = 10
 # == EXPERIMENT PARAMETERS ==
 DEBUG = True
 BASE_PATH = os.getcwd()
-NAMESPACE = 'generate_mock'
+NAMESPACE = 'results/generate_synthetic_dataset/mock'
 with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glob=globals())):
     e.info('creating mock dataset...')
     dataset_folder_path = os.path.join(e.path, DATASET_NAME)

@@ -1,3 +1,7 @@
+"""
+Updates an existing version of the "RbMotifs" dataset for the new visual graph dataset format
+specifications.
+"""
 import os
 import json
 
@@ -23,7 +27,7 @@ LOG_STEP = 100
 # == EXPERIMENT PARAMETERS ==
 DEBUG = True
 BASE_PATH = os.getcwd()
-NAMESPACE = 'update_rb_motifs'
+NAMESPACE = 'results/generate_synthetic_dataset/update_rb_motifs'
 with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glob=globals())):
 
     # First of all we need to load the current version of the rb_colors dataset
@@ -62,6 +66,8 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
         plt.close(fig)
 
         # ~ update metadata
+        metadata['index'] = index
+
         if 'train_split' not in metadata and 'split' in metadata:
             if metadata['split'] == 'train':
                 metadata['train_split'] = [1]
