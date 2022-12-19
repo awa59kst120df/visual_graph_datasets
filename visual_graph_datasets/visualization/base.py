@@ -7,6 +7,7 @@ import numpy as np
 import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from imageio.v2 import imread
 
 import visual_graph_datasets.typing as tc
 
@@ -84,3 +85,15 @@ def layout_node_positions(g: tc.GraphDict,
         positions[i] = pos
 
     return np.array(positions)
+
+
+def draw_image(ax: plt.Axes,
+               image_path: str,
+               ) -> None:
+    """
+    Given the path ``image_path`` of a suitable image file and a matplotlib axes canvas ``ax``, this function will
+    draw the image onto the canvas.
+    """
+    image = imread(image_path)
+    extent = [0, image.shape[0], 0, image.shape[1]]
+    ax.imshow(image, extent=extent)

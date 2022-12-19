@@ -79,6 +79,8 @@ def create_importances_pdf(graph_list: t.List[tc.GraphDict],
                            node_positions_list: t.List[np.ndarray],
                            importances_map: t.Dict[str, t.Tuple[t.List[np.ndarray], t.List[np.ndarray]]],
                            output_path: str,
+                           labels_list: t.Optional[t.List[str]] = None,
+                           importance_channel_labels: t.Optional[t.List[str]] = None,
                            plot_node_importances_cb: t.Callable = plot_node_importances_border,
                            plot_edge_importances_cb: t.Callable = plot_edge_importances_border,
                            base_fig_size: float = 8,
@@ -86,6 +88,9 @@ def create_importances_pdf(graph_list: t.List[tc.GraphDict],
                            logger: logging.Logger = NULL_LOGGER,
                            log_step: int = 100,
                            ):
+    """
+
+    """
     # ~ ASSERTIONS ~
     # Some assertions in the beginning to avoid trouble later, because this function will be somewhat
     # computationally expensive.
@@ -111,6 +116,14 @@ def create_importances_pdf(graph_list: t.List[tc.GraphDict],
 
     num_channels = list(num_channel_set)[0]
 
+    # Now that we know the number of channels we also need to make sure that the number of importance channel labels,
+    # if they are given, matches the number of channels
+    if importance_channel_labels is not None:
+        assert len(importance_channel_labels) == num_channels, (
+            f'The number of labels given for the importance channels (current: {len(importance_channel_labels)}) has '
+            f'to match the number of importance channels represented in the data.'
+        )
+
     # ~ CREATING PDF ~
 
     with PdfPages(output_path) as pdf:
@@ -131,7 +144,8 @@ def create_importances_pdf(graph_list: t.List[tc.GraphDict],
             fig, rows = plt.subplots(
                 ncols=num_cols,
                 nrows=num_rows,
-                figsize=(base_fig_size * num_cols, base_fig_size * num_rows)
+                figsize=(base_fig_size * num_cols, base_fig_size * num_rows),
+                squeeze=False,
             )
 
             for r in range(num_rows):
@@ -148,14 +162,24 @@ def create_importances_pdf(graph_list: t.List[tc.GraphDict],
                     # for the column:
                     if r == 0:
                         title_string = f'key: "{name}"'
+                        if labels_list is not None:
+                            title_string += f'\n{labels_list[index]}'
+
                         ax.set_title(title_string)
 
                     # Likewise only for the first item in a row we can use the axes y-label as a kind of
                     # row title. By default, we just use the index of the channel as title
                     if c == 0:
-                        ax.set_ylabel(f'Channel {r}')
+                        label_string = f'Channel {r}'
+                        if importance_channel_labels is not None:
+                            label_string += f'\n{importance_channel_labels[r]}'
 
-                    ax.imshow(image, extent=extent)
+                        ax.set_ylabel(label_string)
+
+                    ax.imshow(
+                        image,
+                        extent=extent
+                    )
                     ax.set_xticks([])
                     ax.set_yticks([])
 

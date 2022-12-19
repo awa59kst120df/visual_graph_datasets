@@ -175,3 +175,11 @@ def get_file_share(config: Config = Config(),
     file_share = file_share_class(**provider_kwargs)
 
     return file_share
+
+
+def ensure_dataset(dataset_name: str, config: Config = Config(), provider_id: str = 'main'):
+
+    dataset_path = os.path.join(config.get_datasets_path(), dataset_name)
+    if not os.path.exists(dataset_path):
+        file_share = get_file_share(config=config, provider_id=provider_id)
+        file_share.download_dataset(dataset_name, config.get_datasets_path())

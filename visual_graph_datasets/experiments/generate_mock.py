@@ -147,7 +147,7 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
         # Now we also need to figure out the coordinates of nodes as pixel values inside the coordinate
         # system of the created image representation of the figure.
         image_node_positions = [[int(v) for v in ax.transData.transform((x, y))]
-                                for x, y in node_positions]
+                                 for x, y in node_positions]
         g['image_node_positions'] = image_node_positions
 
         plt.close(fig)

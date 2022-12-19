@@ -1,7 +1,9 @@
 """
-Generates a single molecule-based visual graph dataset by merging potentially multiple CSV files.
+Generates a single molecule-based "visual graph dataset2 by merging multiple CSV files containing molecular SMILES
+codes and target value annotations.
 """
 import os
+import shutil
 import sys
 import json
 import csv
@@ -32,27 +34,58 @@ from visual_graph_datasets.visualization.molecules import visualize_molecular_gr
 from visual_graph_datasets.data import NumericJsonEncoder
 from visual_graph_datasets.data import load_visual_graph_dataset
 
+SHORT_DESCRIPTION = (
+    'Generates a single molecule-based "visual graph dataset" by merging multiple CSV files containing molecular '
+    'SMILES codes and target values annotations.'
+)
+
 # == SOURCE PARAMETERS ==
+# This section contains the parameters which define the source CSV files which are to be used as the basis for the
+# final dataset. At the bare minimum, these CSV files have to contain one column with the SMILES representation of the
+# molecule and one column with the corresponding target value to be predicted. It is also possible to use multiple
+# target value from a single CSV file.
+# The CSV files can either be supplied as local files or them can first be downloaded from a remote VGD file share
+# provider.
+
+# This is the ID of the VGD file share provider, which will (optionally) be used to download the CSV source files
 FILE_SHARE_PROVIDER: str = 'main'
+# The keys of this dictionary should be unique keys which identify the theme of each CSV file to be used in the
+# subsequent merge. The values should be paths to the CSV files. If local files are to be used, the absolute(!) paths
+# have to be supplied. Alternatively, if the paths cannot be found on the local system, they will be interpreted as
+# path relative to the remote file share provider and it is attempted to download those files from there.
 CSV_FILE_NAME_MAP: t.Dict[str, str] = {
+    'water': 'source/water_solubility.csv',
     'benzene': 'source/benzene_solubility.csv',
     'acetone': 'source/acetone_solubility.csv',
-    'ethanol': 'source/ethanol_solubility.csv'
+    'ethanol': 'source/ethanol_solubility.csv',
 }
+# The keys should be the same keys as defined above for each of the CSV files and the values should be the string names
+# of the columns of each file, which contain the SMILES string.
 SMILES_COLUMN_NAME_MAP: t.Dict[str, str] = {
+    'water': 'Smiles',
     'benzene': 'SMILES',
     'acetone': 'SMILES',
     'ethanol': 'SMILES',
 }
+# THe keys should be the same as defined above for each of the CSV files and the values should be lists containing
+# all the string column names which contain the target values of the corresponding dataset.
 TARGET_COLUMN_NAME_MAP: t.Dict[str, t.List[str]] = {
+    'water': ['LogS'],
     'benzene': ['LogS'],
     'acetone': ['LogS'],
     'ethanol': ['LogS'],
 }
-SOURCE_KEYS = list(CSV_FILE_NAME_MAP.keys())
+SOURCE_KEYS = list(CSV_FILE_NAME_MAP.keys())  # do not modify
 
 # == PROCESSING PARAMETERS ==
-UNDIRECTED_EDGES_AS_TWO = True
+# This section contains the parameters for the processing pipeline. These for example
+
+# boolean flag whether to represent undirected edges as two directed edges in opposite directions. If model is to be
+# used with KGCNN model, this needs to be True
+UNDIRECTED_EDGES_AS_TWO: bool = True
+# This dictionary defines which node attributes/features will be extracted for the graph representations of the dataset
+# the keys should be descriptive names for the attributes and the values are callback functions which take the Mol
+# object and the CSV row data dict as inputs and return the corresponding partial feature vector.
 NODE_ATTRIBUTE_CALLBACKS = {
     'symbol':                   chem_prop('GetSymbol', OneHotEncoder(
         ['B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'Te', 'I', 'At'],
@@ -74,10 +107,12 @@ NODE_ATTRIBUTE_CALLBACKS = {
         add_unknown=False,
         dtype=int
     )),
+    'num_radical_electrons':    chem_prop('GetNumRadicalElectrons', list_identity),
     'charge':                   chem_prop('GetFormalCharge', list_identity),
     'is_aromatic':              chem_prop('GetIsAromatic', list_identity),
     'is_in_ring':               chem_prop('IsInRing', list_identity),
 }
+# This dictionary is exactly the same thing but for the edge attributes.
 EDGE_ATTRIBUTE_CALLBACKS = {
     'bond_type':                chem_prop('GetBondType', OneHotEncoder(
         [1, 2, 3, 12],
@@ -93,18 +128,31 @@ EDGE_ATTRIBUTE_CALLBACKS = {
     'is_in_ring':               chem_prop('IsInRing', list_identity),
     'is_conjugated':            chem_prop('GetIsConjugated', list_identity)
 }
+# This dictionary is used to define which global graph attributes/features are supposed to be generated for each
+# element of the dataset. THe keys should be descriptive names and the values should be descriptive names and the
+# values should be callback functions which take the Mol object and the CSV row data dict as input and return a
+# vector with the partial graph features.
 GRAPH_ATTRIBUTE_CALLBACKS = {
     'molecular_weight':         chem_descriptor(Chem.Descriptors.ExactMolWt, list_identity),
     'num_radical_electrons':    chem_descriptor(Chem.Descriptors.NumRadicalElectrons, list_identity),
-    'num_valence_electrons':    chem_descriptor(Chem.Descriptors.NumValenceElectrons, list_identity)
+    'num_valence_electrons':    chem_descriptor(Chem.Descriptors.NumValenceElectrons, list_identity),
+    'fp_density_morgan_1':      chem_descriptor(Chem.Descriptors.FpDensityMorgan1, list_identity),
+    'fp_density_morgan_2':      chem_descriptor(Chem.Descriptors.FpDensityMorgan2, list_identity),
+    'fp_density_morgan_3':      chem_descriptor(Chem.Descriptors.FpDensityMorgan3, list_identity),
+    'log_p':                    chem_descriptor(Chem.Crippen.MolLogP, list_identity),
 }
-GRAPH_METADATA_CALLBACKS = {
+GRAPH_METADATA_CALLBACKS = {  # Not in use at the moment
     #'name': lambda mol, data: data['smiles'],
     #'smiles': lambda mol, data: data['smiles'],
 }
 
 # == DATASET PARAMETERS ==
+# This section defines parameters for the creation of the visual graph dataset.
+
+# This will be the name of the finished visual graph dataset folder. This dataset folder can be found in the
+# archive folder of the experiment run.
 DATASET_NAME: str = 'organic_solvents'
+# The width and height (in pixels) with which the visualizations will be created.
 IMAGE_WIDTH: int = 1000
 IMAGE_HEIGHT: int = 1000
 
@@ -123,11 +171,21 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
     config.load()
 
     # -- get source datasets --
-    # First of all we need to download the source dataset files from the remote file share provider.
-    e.info('downloading from remote file share...')
+    # As for the sources there are two possibilities: Either we use local files or we download the files from the
+    # VGD file share provider first. The distinction is made by checking if the provided paths are
+    e.info('collecting source files...')
+    file_path_map: t.Dict[str, str] = {}
     file_share: AbstractFileShare = get_file_share(config, FILE_SHARE_PROVIDER)
-    file_path_map = {key: file_share.download_file(file_name, e.path)
-                     for key, file_name in CSV_FILE_NAME_MAP.items()}
+    for key, file_name in CSV_FILE_NAME_MAP.items():
+        if os.path.exists(file_name):
+            e.info(f' * copying {file_name}...')
+            local_file_path = os.path.join(e.path, os.path.basename(file_name))
+            shutil.copy(file_name, e.path)
+        else:
+            e.info(f' * downloading {file_name} ...')
+            local_file_path = file_share.download_file(file_name, e.path)
+
+        file_path_map[key] = local_file_path
 
     # -- merge datasets & convert dataset to molecules --
     # Next we need to read all the CSV files and then merge them based on the SMILES strings. This means
@@ -141,6 +199,7 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
     # the SMILES string to Mol objects which are then ultimately converted into the graph representation
     # expected for the visual graph dataset format.
     e.info('merging datasets...')
+    overlap_counter = 0
     smiles_data_map: t.Dict[int, t.Dict[str, t.Any]] = {}
     for key, csv_path in file_path_map.items():
 
@@ -163,7 +222,9 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
                     }
                 else:
                     smiles_data_map[smiles]['data_map'][key] = row
+                    overlap_counter += 1
 
+    e.info(f'overlapping elements: {overlap_counter}')
     e.info('converting smiles to molecules...')
     index_data_map: t.Dict[int, t.Dict[str, t.Any]] = {}
     for i, (smiles, data) in enumerate(smiles_data_map.items()):
@@ -255,7 +316,9 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
             image_width=IMAGE_WIDTH,
             image_height=IMAGE_HEIGHT,
         )
-        g['node_positions'] = node_positions
+        image_node_positions = [[int(v) for v in ax.transData.transform((x, y))]
+                                for x, y in node_positions]
+        g['node_positions'] = image_node_positions
         image_path = os.path.join(dataset_path, f'{index}.png')
         fig.savefig(image_path)
         plt.close(fig)
@@ -298,17 +361,23 @@ with Skippable(), e.analysis:
     pdf_path = os.path.join(e.path, 'dataset_info.pdf')
     with PdfPages(pdf_path) as pdf:
         e.info(f'target value distribution...')
-        fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(12, 12))
-        ax.set_title('Target Value Distribution')
-        targets = [d['metadata']['target'][0] for i, d in index_data_map.items()]
-        e.info(f' * min: {np.min(targets):.2f} - mean: {np.mean(targets)} - max: {np.max(targets):.2f}')
-        n, bins, edges = ax.hist(
-            targets,
-            bins=NUM_BINS,
-            color=PLOT_COLOR
-        )
-        ax.set_xticks(bins)
-        ax.set_xticklabels([round(v, 2) for v in bins])
+        n_cols = len(SOURCE_KEYS)
+        fig, rows = plt.subplots(ncols=n_cols, nrows=1, figsize=(12 * n_cols, 12), squeeze=False)
+        for c, ax, key in zip(range(n_cols), rows[0], SOURCE_KEYS):
+            ax.set_title(f'Target Value Distribution - {key}')
+            targets = [v
+                       for i, d in index_data_map.items()
+                       if (v := d['metadata']['target'][c]) is not None]
+            e.info(f' * number of targets: {len(targets)}')
+            e.info(f' * min: {np.min(targets):.2f} - mean: {np.mean(targets)} - max: {np.max(targets):.2f}')
+            n, bins, edges = ax.hist(
+                targets,
+                bins=NUM_BINS,
+                color=PLOT_COLOR
+            )
+            ax.set_xticks(bins)
+            ax.set_xticklabels([round(v, 2) for v in bins])
+
         pdf.savefig(fig)
 
         e.info('graph size distribution...')

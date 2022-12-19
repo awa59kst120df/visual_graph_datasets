@@ -100,9 +100,6 @@ Completely refactored the way in which datasets are managed.
 * Added experiment ``generate_molecule_dataset_from_csv`` which can be used to download the source CSV
   file for a molecule (SMILES based) dataset from the file share and then generate a visual graph dataset
   based on that.
-* Added the experiment ``generate_benzene_solubility_dataset_from_csv`` which creates the benzene
-  solubility visual graph dataset.
-* Added the ``benzene_solubility`` dataset to the remote repository.
 
 0.7.1 - 15.12.2022
 ------------------
@@ -114,3 +111,13 @@ Completely refactored the way in which datasets are managed.
 ------------------
 
 * Renamed ``TestingConfig`` to ``IsolatedConfig`` due to a warning in pytest test collection
+
+0.8.0 - 19.12.2022
+------------------
+
+* Fixed a bug in ``experiments.generate_molecule_dataset_from_csv`` where faulty node positions were saved
+  for the generated visualizations of the molecules
+* Added the experiment ``experiments.generate_molecule_multitask_dataset_from_csv`` which generates a molecule
+  based dataset for a multitask regression learning objective using multiple CSVs and merging them together.
+* Update ``README.md``
+* Added a ``examples`` folder
