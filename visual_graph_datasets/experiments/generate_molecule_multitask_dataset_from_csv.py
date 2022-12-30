@@ -1,6 +1,16 @@
 """
-Generates a single molecule-based "visual graph dataset2 by merging multiple CSV files containing molecular SMILES
-codes and target value annotations.
+Generates a single molecule-based "visual graph dataset" by merging multiple CSV files containing molecular
+SMILES codes and target value annotations. More specifically, the outcome of this experiment is a visual
+graph dataset whose elements and visualizations represent molecules. The target will be a multitask
+regression problem, where every molecule is associated with a vector of multiple cont. regression targets.
+
+**CHANGELOG**
+
+0.1.0 - 16.12.2022 - Initial version
+
+0.1.1 - 30.12.2022 - Fixed a bug, where smiles representing single atoms were able to enter the dataset.
+These single node graphs would cause problems down the line for graph neural networks since they do not
+include any edges at all. Such molecules are now filtered and NOT added to the final VGD.
 """
 import os
 import shutil
@@ -34,41 +44,44 @@ from visual_graph_datasets.visualization.molecules import visualize_molecular_gr
 from visual_graph_datasets.data import NumericJsonEncoder
 from visual_graph_datasets.data import load_visual_graph_dataset
 
+VERSION = '0.1.1'
 SHORT_DESCRIPTION = (
-    'Generates a single molecule-based "visual graph dataset" by merging multiple CSV files containing molecular '
-    'SMILES codes and target values annotations.'
+    'Generates a single molecule-based "visual graph dataset" by merging multiple CSV files containing '
+    'molecular SMILES codes and target values annotations.'
 )
 
 # == SOURCE PARAMETERS ==
-# This section contains the parameters which define the source CSV files which are to be used as the basis for the
-# final dataset. At the bare minimum, these CSV files have to contain one column with the SMILES representation of the
-# molecule and one column with the corresponding target value to be predicted. It is also possible to use multiple
-# target value from a single CSV file.
-# The CSV files can either be supplied as local files or them can first be downloaded from a remote VGD file share
-# provider.
+# This section contains the parameters which define the source CSV files which are to be used as the basis
+# for the final dataset. At the bare minimum, these CSV files have to contain one column with the SMILES
+# representation of the molecule and one column with the corresponding target value to be predicted.
+# It is also possible to use multiple target value from a single CSV file.
+# The CSV files can either be supplied as local files or them can first be downloaded from a remote VGD
+# file share provider.
 
-# This is the ID of the VGD file share provider, which will (optionally) be used to download the CSV source files
+# This is the ID of the VGD file share provider, which will (optionally) be used to download the CSV source
+# files
 FILE_SHARE_PROVIDER: str = 'main'
-# The keys of this dictionary should be unique keys which identify the theme of each CSV file to be used in the
-# subsequent merge. The values should be paths to the CSV files. If local files are to be used, the absolute(!) paths
-# have to be supplied. Alternatively, if the paths cannot be found on the local system, they will be interpreted as
-# path relative to the remote file share provider and it is attempted to download those files from there.
+# The keys of this dictionary should be unique keys which identify the theme of each CSV file to be used in
+# the subsequent merge. The values should be paths to the CSV files. If local files are to be used,
+# the absolute(!) paths have to be supplied. Alternatively, if the paths cannot be found on the local system,
+# they will be interpreted as path relative to the remote file share provider and it is attempted to
+# download those files from there.
 CSV_FILE_NAME_MAP: t.Dict[str, str] = {
     'water': 'source/water_solubility.csv',
     'benzene': 'source/benzene_solubility.csv',
     'acetone': 'source/acetone_solubility.csv',
     'ethanol': 'source/ethanol_solubility.csv',
 }
-# The keys should be the same keys as defined above for each of the CSV files and the values should be the string names
-# of the columns of each file, which contain the SMILES string.
+# The keys should be the same keys as defined above for each of the CSV files and the values should be the
+# string names of the columns of each file, which contain the SMILES string.
 SMILES_COLUMN_NAME_MAP: t.Dict[str, str] = {
     'water': 'Smiles',
     'benzene': 'SMILES',
     'acetone': 'SMILES',
     'ethanol': 'SMILES',
 }
-# THe keys should be the same as defined above for each of the CSV files and the values should be lists containing
-# all the string column names which contain the target values of the corresponding dataset.
+# THe keys should be the same as defined above for each of the CSV files and the values should be lists
+# containing all the string column names which contain the target values of the corresponding dataset.
 TARGET_COLUMN_NAME_MAP: t.Dict[str, t.List[str]] = {
     'water': ['LogS'],
     'benzene': ['LogS'],
@@ -80,12 +93,13 @@ SOURCE_KEYS = list(CSV_FILE_NAME_MAP.keys())  # do not modify
 # == PROCESSING PARAMETERS ==
 # This section contains the parameters for the processing pipeline. These for example
 
-# boolean flag whether to represent undirected edges as two directed edges in opposite directions. If model is to be
-# used with KGCNN model, this needs to be True
+# boolean flag whether to represent undirected edges as two directed edges in opposite directions.
+# If dataset is to be used with KGCNN model, this needs to be True
 UNDIRECTED_EDGES_AS_TWO: bool = True
-# This dictionary defines which node attributes/features will be extracted for the graph representations of the dataset
-# the keys should be descriptive names for the attributes and the values are callback functions which take the Mol
-# object and the CSV row data dict as inputs and return the corresponding partial feature vector.
+# This dictionary defines which node attributes/features will be extracted for the graph representations of
+# the dataset the keys should be descriptive names for the attributes and the values are callback functions
+# which take the Mol object and the CSV row data dict as inputs and return the corresponding partial
+# feature vector.
 NODE_ATTRIBUTE_CALLBACKS = {
     'symbol':                   chem_prop('GetSymbol', OneHotEncoder(
         ['B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'Te', 'I', 'At'],
@@ -128,10 +142,10 @@ EDGE_ATTRIBUTE_CALLBACKS = {
     'is_in_ring':               chem_prop('IsInRing', list_identity),
     'is_conjugated':            chem_prop('GetIsConjugated', list_identity)
 }
-# This dictionary is used to define which global graph attributes/features are supposed to be generated for each
-# element of the dataset. THe keys should be descriptive names and the values should be descriptive names and the
-# values should be callback functions which take the Mol object and the CSV row data dict as input and return a
-# vector with the partial graph features.
+# This dictionary is used to define which global graph attributes/features are supposed to be generated for
+# each element of the dataset. THe keys should be descriptive names and the values should be descriptive
+# names and the values should be callback functions which take the Mol object and the CSV row data dict as
+# input and return a vector with the partial graph features.
 GRAPH_ATTRIBUTE_CALLBACKS = {
     'molecular_weight':         chem_descriptor(Chem.Descriptors.ExactMolWt, list_identity),
     'num_radical_electrons':    chem_descriptor(Chem.Descriptors.NumRadicalElectrons, list_identity),
@@ -171,8 +185,8 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
     config.load()
 
     # -- get source datasets --
-    # As for the sources there are two possibilities: Either we use local files or we download the files from the
-    # VGD file share provider first. The distinction is made by checking if the provided paths are
+    # As for the sources there are two possibilities: Either we use local files or we download the files
+    # from the VGD file share provider first. The distinction is made by checking if the provided paths are
     e.info('collecting source files...')
     file_path_map: t.Dict[str, str] = {}
     file_share: AbstractFileShare = get_file_share(config, FILE_SHARE_PROVIDER)
@@ -227,6 +241,7 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
     e.info(f'overlapping elements: {overlap_counter}')
     e.info('converting smiles to molecules...')
     index_data_map: t.Dict[int, t.Dict[str, t.Any]] = {}
+    index = 0
     for i, (smiles, data) in enumerate(smiles_data_map.items()):
 
         data['data'] = {}
@@ -239,7 +254,16 @@ with Skippable(), (e := Experiment(base_path=BASE_PATH, namespace=NAMESPACE, glo
                                   for column_name in TARGET_COLUMN_NAME_MAP[key]]
         data['data']['smiles'] = smiles
 
-        index_data_map[i] = data
+        # 30.12.2022
+        # This check here prevents "molecules" which consists of only a single atom to enter the dataset.
+        # These would be single node graphs and due to not having any edges, they would cause problems
+        # down the line for graph neural networks - hence they are simply excluded
+        if data['mol'].GetAtoms() == 1 or len(data['mol'].GetBonds()) == 0:
+            e.info(f' ! invalid: {smiles}')
+            continue
+
+        index_data_map[index] = data
+        index += 1
 
     dataset_length = len(index_data_map)
     e.info(f'dataset with {dataset_length} elements')

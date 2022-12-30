@@ -112,12 +112,15 @@ Completely refactored the way in which datasets are managed.
 
 * Renamed ``TestingConfig`` to ``IsolatedConfig`` due to a warning in pytest test collection
 
-0.8.0 - 19.12.2022
+0.8.0 - 30.12.2022
 ------------------
 
 * Fixed a bug in ``experiments.generate_molecule_dataset_from_csv`` where faulty node positions were saved
   for the generated visualizations of the molecules
-* Added the experiment ``experiments.generate_molecule_multitask_dataset_from_csv`` which generates a molecule
-  based dataset for a multitask regression learning objective using multiple CSVs and merging them together.
+* Added the experiment ``experiments.generate_molecule_multitask_dataset_from_csv`` which generates a
+  molecule based dataset for a multitask regression learning objective using multiple CSVs and merging
+  them together.
+* Fixed a bug in ``experiments.generate_molecule_multitask_dataset_from_csv`` where invalid molecules were
+  causing problems down the line. These are being filtered now.
 * Update ``README.md``
 * Added a ``examples`` folder
